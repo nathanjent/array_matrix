@@ -6,21 +6,21 @@ trait Matrix {
     fn size(&self) -> (usize, usize);
 }
 
-/// TODO implement
-///
-/// A macro that takes a struct-like definition that takes an array type and row
-/// length arguments and implements the required methods.
-///
-/// Usage:
-///     impl_matrix!{
-///         struct MyMatrix([f32; 9], 3);
-///     };
-///
-///     let mut matrix =  MyMatrix([0.0; 9]);
-///     matrix[(2,1)] = 8.1;
-///     println!("{:?}", matrix);
-///     println!("{}", m.row());
-///
+// TODO implement
+//
+// A macro that takes a struct-like definition that takes an array type and row
+// length arguments and implements the required methods.
+//
+// Usage:
+//     impl_matrix!{
+//         struct MyMatrix([f32; 9], 3);
+//     };
+//
+//     let mut matrix =  MyMatrix([0.0; 9]);
+//     matrix[(2,1)] = 8.1;
+//     println!("{:?}", matrix);
+//     println!("{}", m.row());
+//
 #[macro_export]
 macro_rules! impl_matrix {
     ($struct_name:ident ([$elem:ty; $len:expr], $row_len:expr)) => {
@@ -109,16 +109,68 @@ fn test_matrix() {
     m[(2,1)] = 8.1;
     println!("{:?}", m);
     println!("{}", m.row());
-    assert_eq!(m.row(), m.column());
+    assert_eq!(m.row(), 3);
+    assert_eq!(m.column(), 3);
+}
+
+macro_rules! struct_test {
+    ($st:ident([$t:ty; ($row:expr, $col:expr)])) => {
+        #[derive(Debug)]
+        struct $st([$t; $row * $col]);
+
+        //impl Matrix for $st {
+        //    fn row(&self) -> usize {
+        //        $row
+        //    }
+        //
+        //    fn column(&self) -> usize {
+        //        $col
+        //    }
+        //
+        //    fn size(&self) -> (usize, usize) {
+        //        (self.row(), self.column())
+        //    }
+        //}
+
+        impl Index<(usize, usize)> for $st {
+            type Output = $t;
+
+            #[inline]
+            fn index(&self, (i, j): (usize, usize)) -> &$t {
+                assert!(i < $row && j < $col);
+                &self.0[i * $col + j]
+            }
+        }
+
+        impl IndexMut<(usize, usize)> for $st {
+
+            #[inline]
+            fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut $t {
+                assert!(i < $row && j < $col);
+                &mut self.0[i * $col + j]
+            }
+        }
+    }
 }
 
 #[test]
-fn test_impl_matrix() {
-    impl_matrix!(MacroMatrix([i32; 12], 3));
+fn test_test() {
+    struct_test!(Test([i32; (3, 3)]));
 
-    let mut m = MacroMatrix([42; 12]);
-    m[(2,2)] = 0.1;
-    println!("{:?}", m);
-    println!("{}", m.row());
-    assert_eq!(m.row(), m.column());
+    let mut test = Test([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    println!("{:?}", test);
+    println!("{:?}", test[(1, 2)]);
+    test[(1, 2)] = 30;
+    println!("{:?}", test[(1, 2)]);
 }
+
+//#[test]
+//fn test_impl_matrix() {
+//    impl_matrix!(MacroMatrix([i32; 12], 3));
+//
+//    let mut m = MacroMatrix([42; 12]);
+//    m[(2,2)] = 0.1;
+//    println!("{:?}", m);
+//    println!("{}", m.row());
+//    assert_eq!(m.row(), m.column());
+//}
