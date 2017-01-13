@@ -1,3 +1,4 @@
+pub use array_matrix::ArrayMatrix;
 pub mod array_matrix;
 
 /// A macro that takes a struct-like definition that takes an array type and (row, column)
