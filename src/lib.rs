@@ -1,5 +1,5 @@
 pub use array_matrix::ArrayMatrix;
-pub mod array_matrix;
+mod array_matrix;
 
 /// A macro that takes a struct-like definition that takes an array type and (row, column)
 /// size arguments and implements the required methods.
@@ -23,8 +23,8 @@ macro_rules! impl_matrix {
     ($st:ident([$t:ty; ($row:expr, $col:expr)])) => {
         use array_matrix::ArrayMatrix;
         use std::ops::{Index, IndexMut};
+        use std::fmt;
 
-        #[derive(Debug)]
         struct $st([$t; $row * $col]);
 
         impl ArrayMatrix for $st {
@@ -57,6 +57,12 @@ macro_rules! impl_matrix {
             fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut $t {
                 assert!(i < $row && j < $col);
                 &mut self.0[i * $col + j]
+            }
+        }
+
+        impl fmt::Debug for $st {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.debug_list().entries(self.0.iter()).finish()
             }
         }
     }

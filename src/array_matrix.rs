@@ -10,8 +10,8 @@ pub trait ArrayMatrix {
 mod tests {
     use array_matrix::ArrayMatrix;
     use std::ops::{Index, IndexMut};
+    use std::fmt;
 
-    #[derive(Debug)]
     struct MyMatrix([f32; 9]);
 
     impl ArrayMatrix for MyMatrix {
@@ -44,6 +44,12 @@ mod tests {
             let column_len = self.column();
             assert!(i < self.row() && j < column_len);
             &mut self.0[i * column_len + j]
+        }
+    }
+
+    impl fmt::Debug for MyMatrix {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.debug_list().entries(self.0.iter()).finish()
         }
     }
 
