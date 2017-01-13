@@ -58,7 +58,8 @@ macro_rules! impl_matrix {
     }
 }
 
-trait ArrayMatrix {
+/// Basic matrix trait.
+pub trait ArrayMatrix {
     fn row(&self) -> usize;
     fn column(&self) -> usize;
     fn size(&self) -> (usize, usize);
