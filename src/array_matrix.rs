@@ -5,16 +5,17 @@ pub trait ArrayMatrix {
     fn size(&self) -> (usize, usize);
 }
 
-/// Non-macro test implementation 
+// Non-macro test implementation 
+// This is where new features are tested before migrating into the macro
 #[cfg(test)]
 mod tests {
     use array_matrix::ArrayMatrix;
     use std::ops::{Index, IndexMut};
     use std::fmt;
 
-    struct MyMatrix([f32; 9]);
+    struct NonMacroMatrix([f32; 9]);
 
-    impl ArrayMatrix for MyMatrix {
+    impl ArrayMatrix for NonMacroMatrix {
         fn row(&self) -> usize {
             3
         }
@@ -28,7 +29,7 @@ mod tests {
         }
     }
 
-    impl Index<(usize, usize)> for MyMatrix {
+    impl Index<(usize, usize)> for NonMacroMatrix {
         type Output = f32;
 
         #[inline]
@@ -38,7 +39,7 @@ mod tests {
         }
     }
 
-    impl IndexMut<(usize, usize)> for MyMatrix {
+    impl IndexMut<(usize, usize)> for NonMacroMatrix {
         #[inline]
         fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut f32 {
             let column_len = self.column();
@@ -47,15 +48,21 @@ mod tests {
         }
     }
 
-    impl fmt::Debug for MyMatrix {
+    impl fmt::Debug for NonMacroMatrix {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             f.debug_list().entries(self.0.iter()).finish()
         }
     }
 
+    impl PartialEq for NonMacroMatrix {
+        fn eq(&self, other: &NonMacroMatrix) -> bool {
+            self.0 == other.0
+        }
+    }
+
     #[test]
     fn test_trait() {
-        let mut m = MyMatrix([3.; 9]);
+        let mut m = NonMacroMatrix([3.; 9]);
         m[(2,1)] = 8.1;
         println!("{:?}", m);
         println!("{}", m.row());

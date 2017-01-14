@@ -1,6 +1,3 @@
-pub use array_matrix::ArrayMatrix;
-mod array_matrix;
-
 /// A macro that takes a struct-like definition that takes an array type and (row, column)
 /// size arguments and implements the required methods.
 ///
@@ -18,13 +15,12 @@ mod array_matrix;
 /// hold data.
 ///
 /// [`generic_matrix`]: http://gifnksm.github.io/generic-matrix-rs/generic_matrix/index.html
+pub use array_matrix::ArrayMatrix;
+mod array_matrix;
+
 #[macro_export]
 macro_rules! impl_matrix {
     ($st:ident([$t:ty; ($row:expr, $col:expr)])) => {
-        use array_matrix::ArrayMatrix;
-        use std::ops::{Index, IndexMut};
-        use std::fmt;
-
         struct $st([$t; $row * $col]);
 
         impl ArrayMatrix for $st {
@@ -65,28 +61,66 @@ macro_rules! impl_matrix {
                 f.debug_list().entries(self.0.iter()).finish()
             }
         }
+
+        impl PartialEq for $st {
+            fn eq(&self, other: &$st) -> bool {
+                self.0 == other.0
+            }
+        }
     }
 }
 
 #[macro_use]
 #[cfg(test)]
 mod tests {
+    use array_matrix::ArrayMatrix;
+    use std::ops::{Index, IndexMut};
+    use std::fmt;
 
     #[test]
-    fn test_impl_matrix() {
+    fn row_col() {
         const ROW: usize = 3;
         const COLUMN: usize = 3;
-
         impl_matrix!(TestMatrix([i32; (ROW, COLUMN)]));
+        let m = TestMatrix([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
+        assert_eq!(m.row(), ROW);
+        assert_eq!(m.column(), COLUMN);
+    }
+
+    #[test]
+    fn index() {
+        impl_matrix!(TestMatrix([i32; (3, 3)]));
+        let m = TestMatrix([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(m[(1, 2)], 6);
+    }
+
+    #[test]
+    fn index_mut() {
+        impl_matrix!(TestMatrix([i32; (3, 3)]));
         let mut m = TestMatrix([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        
-        println!("{:?}", m);
-
         assert_eq!(m[(1, 2)], 6);
         m[(1, 2)] = 30;
         assert_eq!(m[(1, 2)], 30);
-        assert_eq!(m.row(), ROW);
-        assert_eq!(m.column(), COLUMN);
+    }
+
+    #[test]
+    fn eq() {
+        impl_matrix!(TestMatrix([i32; (3, 3)]));
+        let m_a = TestMatrix([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let m_b = TestMatrix([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        assert_eq!(m_a, m_b);
+    }
+
+    #[test]
+    fn impl_two_matrix() {
+        impl_matrix!(TestMatrixA([i32; (2, 2)]));
+        impl_matrix!(TestMatrixB([f32; (2, 2)]));
+
+        let m_a = TestMatrixA([1, 2, 3, 4]);
+        let m_b = TestMatrixB([1., 2., 3., 4.]);
+        
+        assert_eq!(m_a[(0, 0)] as f32, m_b[(0, 0)]);
     }
 }
