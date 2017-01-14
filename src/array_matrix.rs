@@ -1,8 +1,13 @@
 /// Basic matrix trait.
 pub trait ArrayMatrix {
+    /// Get the row length.
     fn row(&self) -> usize;
+    /// Get the column length.
     fn column(&self) -> usize;
+    /// Get row and column length as a tuple.
     fn size(&self) -> (usize, usize);
+    /// Get transpose of the matrix.
+    fn transpose(&self) -> Self;
 }
 
 // Non-macro test implementation 
@@ -26,6 +31,16 @@ mod tests {
 
         fn size(&self) -> (usize, usize) {
             (self.row(), self.column())
+        }
+
+        fn transpose(&self) -> Self {
+            let mut trans = NonMacroMatrix(self.0.clone());
+            for i in 0..self.0.len() {
+               let r = i / self.column();
+               let c = i % self.column();
+               trans[(c, r)] = self[(r, c)].clone();
+            }
+            trans
         }
     }
 

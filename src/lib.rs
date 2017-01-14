@@ -1,3 +1,18 @@
+// Copyright 2017 array_matrix Developers
+//
+// Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
+// http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
+// http://opensource.org/licenses/MIT>, at your option. This file may not be
+// copied, modified, or distributed except according to those terms.
+
+//! A macro to create a 2d matrix struct with manipulation methods using an internal array.
+#![warn(bad_style, missing_docs,
+        unused, unused_extern_crates, unused_import_braces,
+                unused_qualifications, unused_results)]
+
+pub use array_matrix::ArrayMatrix;
+mod array_matrix;
+
 /// A macro that takes a struct-like definition that takes an array type and (row, column)
 /// size arguments and implements the required methods.
 ///
@@ -15,9 +30,6 @@
 /// hold data.
 ///
 /// [`generic_matrix`]: http://gifnksm.github.io/generic-matrix-rs/generic_matrix/index.html
-pub use array_matrix::ArrayMatrix;
-mod array_matrix;
-
 #[macro_export]
 macro_rules! impl_matrix {
     ($st:ident([$t:ty; ($row:expr, $col:expr)])) => {
@@ -34,6 +46,16 @@ macro_rules! impl_matrix {
         
             fn size(&self) -> (usize, usize) {
                 (self.row(), self.column())
+            }
+
+            fn transpose(&self) -> Self {
+                let mut trans = $st(self.0.clone());
+                for i in 0..self.0.len() {
+                   let r = i / $col;
+                   let c = i % $col;
+                   trans[(c, r)] = self[(r, c)].clone();
+                }
+                trans
             }
         }
 
@@ -86,6 +108,15 @@ mod tests {
 
         assert_eq!(m.row(), ROW);
         assert_eq!(m.column(), COLUMN);
+    }
+
+    #[test]
+    fn transpose() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m = TestMatrix([1, 2, 3, 4]);
+        let trans = m.transpose();
+
+        assert_eq!(trans, TestMatrix([1, 3, 2, 4]));
     }
 
     #[test]
