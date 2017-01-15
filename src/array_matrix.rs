@@ -34,7 +34,7 @@ mod tests {
         }
 
         fn transpose(&self) -> Self {
-            let mut trans = NonMacroMatrix(self.0.clone());
+            let mut trans = NonMacroMatrix([0f32; 9]);
             for i in 0..self.0.len() {
                let r = i / self.column();
                let c = i % self.column();

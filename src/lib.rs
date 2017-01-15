@@ -49,7 +49,7 @@ macro_rules! impl_matrix {
             }
 
             fn transpose(&self) -> Self {
-                let mut trans = $st(self.0.clone());
+                let mut trans = $st([0 as $t; $row * $col]);
                 for i in 0..self.0.len() {
                    let r = i / $col;
                    let c = i % $col;
@@ -84,9 +84,11 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl Eq for $st {}
+
         impl PartialEq for $st {
             fn eq(&self, other: &$st) -> bool {
-                self.0 == other.0
+                self.0[..] == other.0[..]
             }
         }
     }
@@ -117,6 +119,29 @@ mod tests {
         let trans = m.transpose();
 
         assert_eq!(trans, TestMatrix([1, 3, 2, 4]));
+    }
+
+    #[test]
+    fn transpose_large() {
+        impl_matrix!(TestMatrix([i32; (6, 6)]));
+        let m = TestMatrix([
+                            0,  1,  2,  3,  4,  5,
+                            6,  7,  8,  9, 10, 11,
+                           12, 13, 14, 15, 16, 17,
+                           18, 19, 20, 21, 22, 23,
+                           24, 25, 26, 27, 28, 29,
+                           30, 31, 32, 33, 34, 35,
+        ]);
+        let trans = m.transpose();
+
+        assert_eq!(trans, TestMatrix([
+                                 0,  6, 12, 18, 24, 30,
+                                 1,  7, 13, 19, 25, 31,
+                                 2,  8, 14, 20, 26, 32,
+                                 3,  9, 15, 21, 27, 33,
+                                 4, 10, 16, 22, 28, 34,
+                                 5, 11, 17, 23, 29, 35,
+        ]));
     }
 
     #[test]
@@ -153,5 +178,14 @@ mod tests {
         let m_b = TestMatrixB([1., 2., 3., 4.]);
         
         assert_eq!(m_a[(0, 0)] as f32, m_b[(0, 0)]);
+    }
+
+    #[test]
+    fn large_matrix() {
+        impl_matrix!(TestMatrixA([i32; (6, 6)]));
+        let m_a = TestMatrixA([1; 36]);
+        let m_b = TestMatrixA([1; 36]);
+
+        assert_eq!(m_a, m_b);
     }
 }
