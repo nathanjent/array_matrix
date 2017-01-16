@@ -35,6 +35,18 @@ macro_rules! impl_matrix {
     ($st:ident([$t:ty; ($row:expr, $col:expr)])) => {
         struct $st([$t; $row * $col]);
 
+        impl $st {
+            /// Creates an identity matrix.
+            #[allow(dead_code)]
+            fn identity() -> $st {
+                let mut m = $st([0 as $t; $row * $col]);
+                for i in 0..$row {
+                    m[(i, i)] = 1 as $t;
+                }
+                m
+            }
+        }
+
         impl ArrayMatrix for $st {
             fn row(&self) -> usize {
                 $row
@@ -128,6 +140,14 @@ mod tests {
     use array_matrix::ArrayMatrix;
     use std::ops::{Index, IndexMut};
     use std::fmt;
+
+    #[test]
+    fn ident() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m = TestMatrix::identity();
+
+        assert_eq!(m, TestMatrix([1, 0, 0, 1]));
+    }
 
     #[test]
     fn row_col() {

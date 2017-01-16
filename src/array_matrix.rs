@@ -24,6 +24,17 @@ mod tests {
 
     struct NonMacroMatrix([f32; 9]);
 
+    #[allow(dead_code)]
+    impl NonMacroMatrix {
+        fn identity() -> NonMacroMatrix {
+            let mut m = NonMacroMatrix([0.; 9]);
+            for i in 0..m.row() {
+                m[(i, i)] = 1.;
+            }
+            m
+        }
+    }
+
     impl ArrayMatrix for NonMacroMatrix {
         fn row(&self) -> usize {
             3
