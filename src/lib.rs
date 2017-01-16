@@ -48,6 +48,10 @@ macro_rules! impl_matrix {
                 (self.row(), self.column())
             }
 
+            fn swap(&mut self, (a_i, a_j): (usize, usize), (b_i, b_j): (usize, usize)) {
+                self.0.swap(a_i * $col + a_j, b_i * $col + b_j);
+            }
+
             fn transpose(&self) -> Self {
                 let mut trans = $st([0 as $t; $row * $col]);
                 for i in 0..self.0.len() {
@@ -56,6 +60,30 @@ macro_rules! impl_matrix {
                    trans[(c, r)] = self[(r, c)].clone();
                 }
                 trans
+            }
+
+            fn transpose_mut(&mut self) {
+                let mut positions = (0..self.0.len()).map(|i| {
+                   (i / $col, i % $col)
+                });
+                loop {
+                    if let Some((r, c)) = positions.next() {
+                        if r == c {
+                            if r < $row - 1 {
+                                // Consume the rest of the row to avoid double swapping
+                                let _ = positions.nth($row - r - 2);
+                            }
+                        } else {
+                            let a = r * $col + c;
+                            let b = c * $row + r;
+                            //assert_eq!(self[(r, c)], self.0[a]);
+                            //assert_eq!(self[(c, r)], self.0[b]);
+                            self.0.swap(a, b);
+                        }
+                    } else {
+                        break
+                    }
+                }
             }
         }
 
@@ -119,6 +147,15 @@ mod tests {
         let trans = m.transpose();
 
         assert_eq!(trans, TestMatrix([1, 3, 2, 4]));
+    }
+
+    #[test]
+    fn transpose_mut() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let mut m = TestMatrix([1, 2, 3, 4]);
+        m.transpose_mut();
+
+        assert_eq!(m, TestMatrix([1, 3, 2, 4]));
     }
 
     #[test]
