@@ -273,18 +273,6 @@ mod tests {
     }
 
     #[test]
-    fn multiply() {
-        impl_matrix!(TestMatrix([i32; (2, 2)]));
-        let m_a = TestMatrix([1, 2,
-                             3, 4]);
-        let m_b = TestMatrix([1, 2,
-                             3, 4]);
-        let m_c = m_a * m_b;
-
-        assert_eq!(m_c[..], [7, 22]);
-    }
-
-    #[test]
     fn impl_two_matrix() {
         impl_matrix!(TestMatrixA([i32; (2, 2)]));
         impl_matrix!(TestMatrixB([f32; (2, 2)]));
