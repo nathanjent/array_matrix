@@ -51,11 +51,11 @@ macro_rules! impl_matrix {
             fn row(&self) -> usize {
                 $row
             }
-        
+
             fn column(&self) -> usize {
                 $col
             }
-        
+
             fn size(&self) -> (usize, usize) {
                 (self.row(), self.column())
             }
@@ -80,6 +80,7 @@ macro_rules! impl_matrix {
                 });
                 loop {
                     if let Some((r, c)) = positions.next() {
+                        //println!("({}, {}) {}", r, c, self[(r, c)]);
                         if r == c {
                             if r < $row - 1 {
                                 // Consume the rest of the row to avoid double swapping
@@ -131,6 +132,30 @@ macro_rules! impl_matrix {
                 self.0[..] == other.0[..]
             }
         }
+
+        impl Add for $st {
+            type Output = $st;
+
+            fn add(self, other: $st) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() + other.0[i].clone();
+                }
+                $st(a)
+            }
+        }
+
+        impl Sub for $st {
+            type Output = $st;
+
+            fn sub(self, other: $st) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() - other.0[i].clone();
+                }
+                $st(a)
+            }
+        }
     }
 }
 
@@ -138,7 +163,7 @@ macro_rules! impl_matrix {
 #[cfg(test)]
 mod tests {
     use array_matrix::ArrayMatrix;
-    use std::ops::{Index, IndexMut};
+    use std::ops::{Index, IndexMut, Add, Sub};
     use std::fmt;
 
     #[test]
@@ -182,23 +207,24 @@ mod tests {
     fn transpose_large() {
         impl_matrix!(TestMatrix([i32; (6, 6)]));
         let m = TestMatrix([
-                            0,  1,  2,  3,  4,  5,
-                            6,  7,  8,  9, 10, 11,
+                           0, 1, 2, 3, 4, 5,
+                           6, 7, 8, 9, 10, 11,
                            12, 13, 14, 15, 16, 17,
                            18, 19, 20, 21, 22, 23,
                            24, 25, 26, 27, 28, 29,
-                           30, 31, 32, 33, 34, 35,
+                           30, 31, 32, 33, 34, 35
         ]);
         let trans = m.transpose();
 
-        assert_eq!(trans, TestMatrix([
-                                 0,  6, 12, 18, 24, 30,
-                                 1,  7, 13, 19, 25, 31,
-                                 2,  8, 14, 20, 26, 32,
-                                 3,  9, 15, 21, 27, 33,
-                                 4, 10, 16, 22, 28, 34,
-                                 5, 11, 17, 23, 29, 35,
-        ]));
+        assert_eq!(trans,
+                   TestMatrix([
+                              0, 6, 12, 18, 24, 30,
+                              1, 7, 13, 19, 25, 31,
+                              2, 8, 14, 20, 26, 32,
+                              3, 9, 15, 21, 27, 33,
+                              4, 10, 16, 22, 28, 34,
+                              5, 11, 17, 23, 29, 35
+                   ]));
     }
 
     #[test]
@@ -227,13 +253,45 @@ mod tests {
     }
 
     #[test]
+    fn add() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = TestMatrix([1, 2, 3, 4]);
+        let m_c = m_a + m_b;
+
+        assert_eq!(m_c, TestMatrix([2, 4, 6, 8]));
+    }
+
+    #[test]
+    fn subtract() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = TestMatrix([1, 2, 3, 4]);
+        let m_c = m_a - m_b;
+
+        assert_eq!(m_c, TestMatrix([0, 0, 0, 0]));
+    }
+
+    #[test]
+    fn multiply() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2,
+                             3, 4]);
+        let m_b = TestMatrix([1, 2,
+                             3, 4]);
+        let m_c = m_a * m_b;
+
+        assert_eq!(m_c[..], [7, 22]);
+    }
+
+    #[test]
     fn impl_two_matrix() {
         impl_matrix!(TestMatrixA([i32; (2, 2)]));
         impl_matrix!(TestMatrixB([f32; (2, 2)]));
 
         let m_a = TestMatrixA([1, 2, 3, 4]);
         let m_b = TestMatrixB([1., 2., 3., 4.]);
-        
+
         assert_eq!(m_a[(0, 0)] as f32, m_b[(0, 0)]);
     }
 

@@ -8,3 +8,4 @@ Cargo.lock
 
 # Temp files
 *.swp
+*.bk

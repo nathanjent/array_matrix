@@ -14,12 +14,12 @@ pub trait ArrayMatrix {
     fn swap(&mut self, a: (usize, usize), b: (usize, usize));
 }
 
-// Non-macro test implementation 
+// Non-macro test implementation
 // This is where new features are tested before migrating into the macro
 #[cfg(test)]
 mod tests {
     use array_matrix::ArrayMatrix;
-    use std::ops::{Index, IndexMut};
+    use std::ops::{Index, IndexMut, Add, Sub};
     use std::fmt;
 
     struct NonMacroMatrix([f32; 9]);
@@ -56,11 +56,11 @@ mod tests {
         fn transpose(&self) -> Self {
             let mut trans = NonMacroMatrix([0f32; 9]);
             for i in 0..self.0.len() {
-               let r = i / self.column();
-               let c = i % self.column();
-               //println!("({0}, {1}): {2} <-> ({1}, {0}): {3}",
-               //    r, c, self[(r, c)], self[(c, r)]);
-               trans[(c, r)] = self[(r, c)].clone();
+                let r = i / self.column();
+                let c = i % self.column();
+                // println!("({0}, {1}): {2} <-> ({1}, {0}): {3}",
+                //    r, c, self[(r, c)], self[(c, r)]);
+                trans[(c, r)] = self[(r, c)].clone();
             }
             trans
         }
@@ -68,9 +68,7 @@ mod tests {
         fn transpose_mut(&mut self) {
             let rows = self.row();
             let cols = self.column();
-            let mut positions = (0..self.0.len()).map(|i| {
-               (i / cols, i % cols)
-            });
+            let mut positions = (0..self.0.len()).map(|i| (i / cols, i % cols));
             loop {
                 if let Some((r, c)) = positions.next() {
                     if r == c {
@@ -81,12 +79,12 @@ mod tests {
                     } else {
                         let a = r * cols + c;
                         let b = c * rows + r;
-                        //assert_eq!(self[(r, c)], self.0[a]);
-                        //assert_eq!(self[(c, r)], self.0[b]);
+                        // assert_eq!(self[(r, c)], self.0[a]);
+                        // assert_eq!(self[(c, r)], self.0[b]);
                         self.0.swap(a, b);
                     }
                 } else {
-                    break
+                    break;
                 }
             }
         }
@@ -123,29 +121,45 @@ mod tests {
         }
     }
 
+    impl Add for NonMacroMatrix {
+        type Output = NonMacroMatrix;
+
+        fn add(self, other: NonMacroMatrix) -> NonMacroMatrix {
+            let mut a = [0f32; 9];
+            for i in 0..a.len() {
+                a[i] = self.0[i].clone() + other.0[i].clone();
+            }
+            NonMacroMatrix(a)
+        }
+    }
+
+    impl Sub for NonMacroMatrix {
+        type Output = NonMacroMatrix;
+
+        fn sub(self, other: NonMacroMatrix) -> NonMacroMatrix {
+            let mut a = [0f32; 9];
+            for i in 0..a.len() {
+                a[i] = self.0[i].clone() - other.0[i].clone();
+            }
+            NonMacroMatrix(a)
+        }
+    }
+
     #[test]
     fn test_trait() {
         let mut m = NonMacroMatrix([3.; 9]);
-        m[(2,1)] = 8.1;
-        //println!("{:?}", m);
-        //println!("{}", m.row());
+        m[(2, 1)] = 8.1;
+        // println!("{:?}", m);
+        // println!("{}", m.row());
         assert_eq!(m.row(), 3);
         assert_eq!(m.column(), 3);
     }
 
     #[test]
     fn transpose_mut() {
-        let mut m = NonMacroMatrix([
-                                   1., 2., 3.,
-                                   4., 5., 6.,
-                                   7., 8., 9.,
-        ]);
+        let mut m = NonMacroMatrix([1., 2., 3., 4., 5., 6., 7., 8., 9.]);
         m.transpose_mut();
 
-        assert_eq!(m, NonMacroMatrix([
-                                 1., 4., 7.,
-                                 2., 5., 8.,
-                                 3., 6., 9.,
-        ]));
+        assert_eq!(m, NonMacroMatrix([1., 4., 7., 2., 5., 8., 3., 6., 9.]));
     }
 }
