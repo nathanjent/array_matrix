@@ -19,7 +19,7 @@ pub trait ArrayMatrix {
 #[cfg(test)]
 mod tests {
     use array_matrix::ArrayMatrix;
-    use std::ops::{Index, IndexMut, Add, Sub};
+    use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign};
     use std::fmt;
 
     struct NonMacroMatrix([f32; 9]);
@@ -133,6 +133,34 @@ mod tests {
         }
     }
 
+    impl Add<f32> for NonMacroMatrix {
+        type Output = NonMacroMatrix;
+
+        fn add(self, other: f32) -> NonMacroMatrix {
+            let mut a = [0f32; 9];
+            for i in 0..a.len() {
+                a[i] = self.0[i].clone() + other;
+            }
+            NonMacroMatrix(a)
+        }
+    }
+
+    impl AddAssign for NonMacroMatrix {
+        fn add_assign(&mut self, other: NonMacroMatrix) {
+            for i in 0..self.0.len() {
+                self.0[i] += other.0[i].clone();
+            }
+        }
+    }
+
+    impl AddAssign<f32> for NonMacroMatrix {
+        fn add_assign(&mut self, other: f32) {
+            for i in 0..self.0.len() {
+                self.0[i] -= other;
+            }
+        }
+    }
+
     impl Sub for NonMacroMatrix {
         type Output = NonMacroMatrix;
 
@@ -142,6 +170,54 @@ mod tests {
                 a[i] = self.0[i].clone() - other.0[i].clone();
             }
             NonMacroMatrix(a)
+        }
+    }
+
+    impl Sub<f32> for NonMacroMatrix {
+        type Output = NonMacroMatrix;
+
+        fn sub(self, other: f32) -> NonMacroMatrix {
+            let mut a = [0f32; 9];
+            for i in 0..a.len() {
+                a[i] = self.0[i].clone() - other;
+            }
+            NonMacroMatrix(a)
+        }
+    }
+
+    impl SubAssign for NonMacroMatrix {
+        fn sub_assign(&mut self, other: NonMacroMatrix) {
+            for i in 0..self.0.len() {
+                self.0[i] -= other.0[i].clone();
+            }
+        }
+    }
+
+    impl SubAssign<f32> for NonMacroMatrix {
+        fn sub_assign(&mut self, other: f32) {
+            for i in 0..self.0.len() {
+                self.0[i] -= other;
+            }
+        }
+    }
+
+    impl Mul<f32> for NonMacroMatrix {
+        type Output = NonMacroMatrix;
+
+        fn mul(self, other: f32) -> NonMacroMatrix {
+            let mut a = [0f32; 9];
+            for i in 0..a.len() {
+                a[i] = self.0[i].clone() * other;
+            }
+            NonMacroMatrix(a)
+        }
+    }
+
+    impl MulAssign<f32> for NonMacroMatrix {
+        fn mul_assign(&mut self, other: f32) {
+            for i in 0..self.0.len() {
+                self.0[i] *= other;
+            }
         }
     }
 

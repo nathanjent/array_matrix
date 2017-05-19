@@ -10,23 +10,26 @@
 /// # fn main() {
 /// // Include traits the will be implemented in the macro.
 /// use array_matrix::ArrayMatrix;
-/// use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign};
-///
-/// // Debug impl in macro needs this
-/// use std::fmt;
+/// use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
+/// use std::fmt; // Debug impl in macro needs fmt
 ///
 /// impl_matrix!(MyMatrix([f32; (3, 3)]));
 ///
 /// let mut matrix =  MyMatrix([0.0; 9]);
+///
+/// // Indexing is available
 /// matrix[(2,1)] = 8.1;
 /// matrix[(0,2)] += 3.1;
 /// matrix[(1,1)] -= 0.1;
 ///
+/// // Standard ops too
+/// matrix += 8.;
+///
 /// assert_eq!(matrix, 
 ///     MyMatrix([
-///         0.0, 0.0, 3.1,
-///         0.0, -0.1, 0.0,
-///         0.0, 8.1, 0.0,
+///         8.0, 8.0, 11.1,
+///         8.0, 7.9, 8.0,
+///         8.0, 16.1, 8.0,
 ///     ])
 /// );
 ///
@@ -154,13 +157,13 @@ macro_rules! impl_matrix {
             }
         }
 
-        impl Sub for $st {
+        impl Add<$t> for $st {
             type Output = $st;
 
-            fn sub(self, other: $st) -> $st {
+            fn add(self, other: $t) -> $st {
                 let mut a = [0 as $t; $row * $col];
                 for i in 0..a.len() {
-                    a[i] = self.0[i].clone() - other.0[i].clone();
+                    a[i] = self.0[i].clone() + other;
                 }
                 $st(a)
             }
@@ -174,10 +177,90 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl AddAssign<$t> for $st {
+            fn add_assign(&mut self, other: $t) {
+                for i in 0..self.0.len() {
+                    self.0[i] += other;
+                }
+            }
+        }
+
+        impl Sub for $st {
+            type Output = $st;
+
+            fn sub(self, other: $st) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() - other.0[i].clone();
+                }
+                $st(a)
+            }
+        }
+
+        impl Sub<$t> for $st {
+            type Output = $st;
+
+            fn sub(self, other: $t) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() - other;
+                }
+                $st(a)
+            }
+        }
+
         impl SubAssign for $st {
             fn sub_assign(&mut self, other: $st) {
                 for i in 0..self.0.len() {
                     self.0[i] -= other.0[i];
+                }
+            }
+        }
+
+        impl SubAssign<$t> for $st {
+            fn sub_assign(&mut self, other: $t) {
+                for i in 0..self.0.len() {
+                    self.0[i] -= other;
+                }
+            }
+        }
+
+        impl Mul<$t> for $st {
+            type Output = $st;
+
+            fn mul(self, other: $t) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() * other;
+                }
+                $st(a)
+            }
+        }
+
+        impl MulAssign<$t> for $st {
+            fn mul_assign(&mut self, other: $t) {
+                for i in 0..self.0.len() {
+                    self.0[i] *= other;
+                }
+            }
+        }
+
+        impl Div<$t> for $st {
+            type Output = $st;
+
+            fn div(self, other: $t) -> $st {
+                let mut a = [0 as $t; $row * $col];
+                for i in 0..a.len() {
+                    a[i] = self.0[i].clone() / other;
+                }
+                $st(a)
+            }
+        }
+
+        impl DivAssign<$t> for $st {
+            fn div_assign(&mut self, other: $t) {
+                for i in 0..self.0.len() {
+                    self.0[i] /= other;
                 }
             }
         }
@@ -187,7 +270,7 @@ macro_rules! impl_matrix {
 #[cfg(test)]
 mod tests {
     use ArrayMatrix;
-    use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign};
+    use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
     use std::fmt;
 
     #[test]
@@ -287,16 +370,6 @@ mod tests {
     }
 
     #[test]
-    fn subtract() {
-        impl_matrix!(TestMatrix([i32; (2, 2)]));
-        let m_a = TestMatrix([1, 2, 3, 4]);
-        let m_b = TestMatrix([1, 2, 3, 4]);
-        let m_c = m_a - m_b;
-
-        assert_eq!(m_c, TestMatrix([0, 0, 0, 0]));
-    }
-
-    #[test]
     fn add_assign() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let mut m_a = TestMatrix([1, 2, 3, 4]);
@@ -307,13 +380,95 @@ mod tests {
     }
 
     #[test]
-    fn subtract_mut() {
+    fn add_scalar() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = m_a + 1;
+
+        assert_eq!(m_b, TestMatrix([2, 3, 4, 5]));
+    }
+
+    #[test]
+    fn add_scalar_assign() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let mut m_a = TestMatrix([1, 2, 3, 4]);
+        m_a += 1;
+
+        assert_eq!(m_a, TestMatrix([2, 3, 4, 5]));
+    }
+
+    #[test]
+    fn subtract() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = TestMatrix([1, 2, 3, 4]);
+        let m_c = m_a - m_b;
+
+        assert_eq!(m_c, TestMatrix([0, 0, 0, 0]));
+    }
+
+    #[test]
+    fn subtract_assign() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let mut m_a = TestMatrix([1, 2, 3, 4]);
         let m_b = TestMatrix([1, 2, 3, 4]);
         m_a -= m_b;
 
         assert_eq!(m_a, TestMatrix([0, 0, 0, 0]));
+    }
+
+    #[test]
+    fn subtract_scalar() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = m_a - 1;
+
+        assert_eq!(m_b, TestMatrix([0, 1, 2, 3]));
+    }
+
+    #[test]
+    fn subtract_scalar_assign() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let mut m_a = TestMatrix([1, 2, 3, 4]);
+        m_a -= 1;
+
+        assert_eq!(m_a, TestMatrix([0, 1, 2, 3]));
+    }
+
+    #[test]
+    fn mul_scalar() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([1, 2, 3, 4]);
+        let m_b = m_a * 3;
+
+        assert_eq!(m_b, TestMatrix([3, 6, 9, 12]));
+    }
+
+    #[test]
+    fn mul_scalar_assign() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let mut m_a = TestMatrix([1, 2, 3, 4]);
+        m_a *= 3;
+
+        assert_eq!(m_a, TestMatrix([3, 6, 9, 12]));
+    }
+
+    #[test]
+    fn div_scalar() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let m_a = TestMatrix([9, 12, 21, 36]);
+        let m_b = m_a / 3;
+
+        assert_eq!(m_b, TestMatrix([3, 4, 7, 12]));
+    }
+
+    #[test]
+    fn div_scalar_assign() {
+        impl_matrix!(TestMatrix([i32; (2, 2)]));
+        let mut m_a = TestMatrix([9, 12, 21, 36]);
+        m_a /= 3;
+
+        assert_eq!(m_a, TestMatrix([3, 4, 7, 12]));
     }
 
     #[test]
