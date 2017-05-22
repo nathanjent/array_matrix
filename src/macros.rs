@@ -225,6 +225,33 @@ macro_rules! impl_matrix {
             }
         }
 
+        impl<T> Mul<T> for $st
+            where T: ArrayMatrix + Index<(usize, usize), Output=$t>
+        {
+            type Output = $st;
+
+            fn mul(self, other: T) -> $st {
+                assert_eq!(self.row(), other.column());
+                let mut result = $st([0 as $t; $row * $col]);
+                let mut positions = (0..result.0.len()).map(|i| {
+                    (i / self.column(), i % self.column())
+                });
+
+                loop {
+                    if let Some((i, j)) = positions.next() {
+                        let mut sum = self[(i, 0)].clone() * other[(0, j)].clone();
+                        for k in 1..other.row() {
+                            sum += self[(i, k)].clone() * other[(k, j)].clone();
+                        }
+                        result[(i, j)] = sum;
+                    } else {
+                        break
+                    }
+                }
+                result
+            }
+        }
+
         impl Mul<$t> for $st {
             type Output = $st;
 
@@ -435,8 +462,18 @@ mod tests {
         assert_eq!(m_a, TestMatrix([0, 1, 2, 3]));
     }
 
+//    #[test]
+//    fn multiply() {
+//        impl_matrix!(TestMatrix([i32; (2, 2)]));
+//        let m_a = TestMatrix([1, 2, 3, 4]);
+//        let m_b = TestMatrix([1, 2, 3, 4]);
+//        let m_c = m_a * m_b;
+//
+//        assert_eq!(m_c[..], [7, 22]);
+//    }
+
     #[test]
-    fn mul_scalar() {
+    fn multiply_scalar() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let m_a = TestMatrix([1, 2, 3, 4]);
         let m_b = m_a * 3;
@@ -445,7 +482,7 @@ mod tests {
     }
 
     #[test]
-    fn mul_scalar_assign() {
+    fn multiply_scalar_assign() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let mut m_a = TestMatrix([1, 2, 3, 4]);
         m_a *= 3;
@@ -454,7 +491,7 @@ mod tests {
     }
 
     #[test]
-    fn div_scalar() {
+    fn divide_scalar() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let m_a = TestMatrix([9, 12, 21, 36]);
         let m_b = m_a / 3;
@@ -463,7 +500,7 @@ mod tests {
     }
 
     #[test]
-    fn div_scalar_assign() {
+    fn divide_scalar_assign() {
         impl_matrix!(TestMatrix([i32; (2, 2)]));
         let mut m_a = TestMatrix([9, 12, 21, 36]);
         m_a /= 3;

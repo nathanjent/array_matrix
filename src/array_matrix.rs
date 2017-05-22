@@ -221,6 +221,56 @@ mod tests {
         }
     }
 
+
+    // 
+    // | a b c |   | r s t | | ar+bu+cx as+bv+cy at+bw+cz |
+    // | d e f | x | u v w | | br+eu+fx bs+ev+fy bt+ew+fz |
+    // | g h i |   | x y z | | cr+hu+ix cs+hv+iy ct+hw+iz |
+    // 
+    // | (0, 0) (0, 1) (0, 2) |   | (0, 0) (0, 1) (0, 2) |
+    // | (1, 0) (1, 1) (1, 2) | x | (1, 0) (1, 1) (1, 2) | =
+    // | (2, 0) (2, 1) (2, 2) |   | (2, 0) (2, 1) (2, 2) |
+    //
+    // | (0, 0)*(0, 0)+(0, 1)*(1, 0)+(0, 2)*(2, 0)
+    //   (0, 0)*(0, 1)+(0, 1)*(1, 1)+(0, 2)*(2, 1)
+    //   (0, 0)*(0, 2)+(0, 1)*(1, 2)+(0, 2)*(2, 2) |
+    // 
+    // | (0, 1)*(0, 0)+(1, 1)*(1, 0)+(1, 2)*(2, 0)
+    //   (0, 1)*(0, 1)+(1, 1)*(1, 1)+(1, 2)*(2, 1)
+    //   (0, 1)*(0, 2)+(1, 1)*(1, 2)+(1, 2)*(2, 2) |
+    //
+    // | (0, 2)*(0, 0)+(2, 1)*(1, 0)+(2, 2)*(2, 0)
+    //   (0, 2)*(0, 1)+(2, 1)*(1, 1)+(2, 2)*(2, 1)
+    //   (0, 2)*(0, 2)+(2, 1)*(1, 2)+(2, 2)*(2, 2) |
+    //
+    // Resulting square matrix will be filled with zero values outside of resulting range.
+    impl<T> Mul<T> for NonMacroMatrix
+        where T: ArrayMatrix + Index<(usize, usize), Output=f32>
+    {
+        type Output = NonMacroMatrix;
+
+        fn mul(self, other: T) -> NonMacroMatrix {
+            assert_eq!(self.row(), other.column());
+            let mut result = NonMacroMatrix([0.; 9]);
+            let mut positions = (0..result.0.len()).map(|i| {
+                (i / self.column(), i % self.column())
+            });
+
+            loop {
+                if let Some((i, j)) = positions.next() {
+                    let mut sum = 0 as f32;
+                    for k in 0..other.row() {
+                        sum += self[(i, k)].clone() * other[(k, j)].clone();
+                    }
+                    result[(i, j)] = sum;
+                } else {
+                    break
+                }
+            }
+            result
+        }
+    }
+
     #[test]
     fn test_trait() {
         let mut m = NonMacroMatrix([3.; 9]);
@@ -230,6 +280,16 @@ mod tests {
         assert_eq!(m.row(), 3);
         assert_eq!(m.column(), 3);
     }
+
+    #[test]
+    fn multiply() {
+        let m_a = NonMacroMatrix([1., 2., 3., 4., 5., 6., 7., 8., 9.]);
+        let m_b = NonMacroMatrix([1., 2., 3., 4., 5., 6., 7., 8., 9.]);
+        let m_c = m_a * m_b;
+
+        assert_eq!(m_c, NonMacroMatrix([30., 36., 42., 66., 81., 96., 102., 126., 150.]));
+    }
+
 
     #[test]
     fn transpose_mut() {
