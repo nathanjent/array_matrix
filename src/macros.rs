@@ -1,6 +1,6 @@
-/// A macro that takes a struct-like definition with array type and a
-/// tuple of (row, column) size arguments and implements the
-/// [`ArrayMatrix`](trait.ArrayMatrix.html) trait.
+//! A macro that takes a struct-like definition with array type and a
+//! tuple of (row, column) size arguments and implements the
+//! [`ArrayMatrix`](trait.ArrayMatrix.html) trait.
 ///
 /// Example:
 ///
@@ -8,14 +8,14 @@
 /// # #[macro_use] extern crate array_matrix;
 ///
 /// # fn main() {
-/// // Include traits the will be implemented in the macro.
+/// // Include traits that will be implemented in the macro.
 /// use array_matrix::ArrayMatrix;
 /// use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
 /// use std::fmt; // Debug impl in macro needs fmt
 ///
 /// impl_matrix!(MyMatrix([f32; (3, 3)]));
 ///
-/// let mut matrix =  MyMatrix([0.0; 9]);
+/// let mut matrix = MyMatrix([0.0; 9]);
 ///
 /// // Indexing is available
 /// matrix[(2,1)] = 8.1;
@@ -25,7 +25,7 @@
 /// // Standard ops too
 /// matrix += 8.;
 ///
-/// assert_eq!(matrix, 
+/// assert_eq!(matrix,
 ///     MyMatrix([
 ///         8.0, 8.0, 11.1,
 ///         8.0, 7.9, 8.0,
@@ -79,17 +79,15 @@ macro_rules! impl_matrix {
             fn transpose(&self) -> Self {
                 let mut trans = $st([0 as $t; $row * $col]);
                 for i in 0..self.0.len() {
-                   let r = i / $col;
-                   let c = i % $col;
-                   trans[(c, r)] = self[(r, c)].clone();
+                    let r = i / $col;
+                    let c = i % $col;
+                    trans[(c, r)] = self[(r, c)].clone();
                 }
                 trans
             }
 
             fn transpose_mut(&mut self) {
-                let mut positions = (0..self.0.len()).map(|i| {
-                   (i / $col, i % $col)
-                });
+                let mut positions = (0..self.0.len()).map(|i| (i / $col, i % $col));
                 loop {
                     if let Some((r, c)) = positions.next() {
                         //println!("({}, {}) {}", r, c, self[(r, c)]);
@@ -106,7 +104,7 @@ macro_rules! impl_matrix {
                             self.0.swap(a, b);
                         }
                     } else {
-                        break
+                        break;
                     }
                 }
             }
@@ -123,7 +121,6 @@ macro_rules! impl_matrix {
         }
 
         impl IndexMut<(usize, usize)> for $st {
-
             #[inline]
             fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut $t {
                 assert!(i < $row && j < $col);
@@ -226,16 +223,16 @@ macro_rules! impl_matrix {
         }
 
         impl<T> Mul<T> for $st
-            where T: ArrayMatrix + Index<(usize, usize), Output=$t>
+        where
+            T: ArrayMatrix + Index<(usize, usize), Output = $t>,
         {
             type Output = $st;
 
             fn mul(self, other: T) -> $st {
                 assert_eq!(self.row(), other.column());
                 let mut result = $st([0 as $t; $row * $col]);
-                let mut positions = (0..result.0.len()).map(|i| {
-                    (i / self.column(), i % self.column())
-                });
+                let mut positions =
+                    (0..result.0.len()).map(|i| (i / self.column(), i % self.column()));
 
                 loop {
                     if let Some((i, j)) = positions.next() {
@@ -245,7 +242,7 @@ macro_rules! impl_matrix {
                         }
                         result[(i, j)] = sum;
                     } else {
-                        break
+                        break;
                     }
                 }
                 result
@@ -291,14 +288,16 @@ macro_rules! impl_matrix {
                 }
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
 mod tests {
-    use ArrayMatrix;
-    use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
+    use crate::array_matrix::ArrayMatrix;
     use std::fmt;
+    use std::ops::{
+        Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign,
+    };
 
     #[test]
     fn ident() {
@@ -341,24 +340,18 @@ mod tests {
     fn transpose_large() {
         impl_matrix!(TestMatrix([i32; (6, 6)]));
         let m = TestMatrix([
-                           0, 1, 2, 3, 4, 5,
-                           6, 7, 8, 9, 10, 11,
-                           12, 13, 14, 15, 16, 17,
-                           18, 19, 20, 21, 22, 23,
-                           24, 25, 26, 27, 28, 29,
-                           30, 31, 32, 33, 34, 35
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
         ]);
         let trans = m.transpose();
 
-        assert_eq!(trans,
-                   TestMatrix([
-                              0, 6, 12, 18, 24, 30,
-                              1, 7, 13, 19, 25, 31,
-                              2, 8, 14, 20, 26, 32,
-                              3, 9, 15, 21, 27, 33,
-                              4, 10, 16, 22, 28, 34,
-                              5, 11, 17, 23, 29, 35
-                   ]));
+        assert_eq!(
+            trans,
+            TestMatrix([
+                0, 6, 12, 18, 24, 30, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27,
+                33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35
+            ])
+        );
     }
 
     #[test]
@@ -462,15 +455,15 @@ mod tests {
         assert_eq!(m_a, TestMatrix([0, 1, 2, 3]));
     }
 
-//    #[test]
-//    fn multiply() {
-//        impl_matrix!(TestMatrix([i32; (2, 2)]));
-//        let m_a = TestMatrix([1, 2, 3, 4]);
-//        let m_b = TestMatrix([1, 2, 3, 4]);
-//        let m_c = m_a * m_b;
-//
-//        assert_eq!(m_c[..], [7, 22]);
-//    }
+    //    #[test]
+    //    fn multiply() {
+    //        impl_matrix!(TestMatrix([i32; (2, 2)]));
+    //        let m_a = TestMatrix([1, 2, 3, 4]);
+    //        let m_b = TestMatrix([1, 2, 3, 4]);
+    //        let m_c = m_a * m_b;
+    //
+    //        assert_eq!(m_c[..], [7, 22]);
+    //    }
 
     #[test]
     fn multiply_scalar() {

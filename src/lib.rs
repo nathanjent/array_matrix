@@ -10,10 +10,15 @@
 //! hold data.
 //!
 //! [`generic_matrix`]: http://gifnksm.github.io/generic-matrix-rs/generic_matrix/index.html
-#![warn(bad_style, missing_docs,
-        unused, unused_extern_crates, unused_import_braces,
-                unused_qualifications, unused_results)]
-
-pub use array_matrix::ArrayMatrix;
-mod array_matrix;
+#![warn(
+    bad_style,
+    missing_docs,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results
+)]
+pub use crate::array_matrix::ArrayMatrix;
+pub mod array_matrix;
 mod macros;
+mod matrix;

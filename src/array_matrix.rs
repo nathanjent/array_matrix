@@ -1,3 +1,5 @@
+//! A matrix backed by an array.
+
 /// Basic matrix trait.
 pub trait ArrayMatrix {
     /// Get the row length.
@@ -18,9 +20,9 @@ pub trait ArrayMatrix {
 // This is where new features are tested before migrating into the macro
 #[cfg(test)]
 mod tests {
-    use array_matrix::ArrayMatrix;
-    use std::ops::{Index, IndexMut, Add, AddAssign, Sub, SubAssign, Mul, MulAssign};
+    use crate::array_matrix::ArrayMatrix;
     use std::fmt;
+    use std::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign};
 
     struct NonMacroMatrix([f32; 9]);
 
@@ -221,12 +223,11 @@ mod tests {
         }
     }
 
-
-    // 
+    //
     // | a b c |   | r s t | | ar+bu+cx as+bv+cy at+bw+cz |
     // | d e f | x | u v w | | br+eu+fx bs+ev+fy bt+ew+fz |
     // | g h i |   | x y z | | cr+hu+ix cs+hv+iy ct+hw+iz |
-    // 
+    //
     // | (0, 0) (0, 1) (0, 2) |   | (0, 0) (0, 1) (0, 2) |
     // | (1, 0) (1, 1) (1, 2) | x | (1, 0) (1, 1) (1, 2) | =
     // | (2, 0) (2, 1) (2, 2) |   | (2, 0) (2, 1) (2, 2) |
@@ -234,7 +235,7 @@ mod tests {
     // | (0, 0)*(0, 0)+(0, 1)*(1, 0)+(0, 2)*(2, 0)
     //   (0, 0)*(0, 1)+(0, 1)*(1, 1)+(0, 2)*(2, 1)
     //   (0, 0)*(0, 2)+(0, 1)*(1, 2)+(0, 2)*(2, 2) |
-    // 
+    //
     // | (0, 1)*(0, 0)+(1, 1)*(1, 0)+(1, 2)*(2, 0)
     //   (0, 1)*(0, 1)+(1, 1)*(1, 1)+(1, 2)*(2, 1)
     //   (0, 1)*(0, 2)+(1, 1)*(1, 2)+(1, 2)*(2, 2) |
@@ -245,16 +246,15 @@ mod tests {
     //
     // Resulting square matrix will be filled with zero values outside of resulting range.
     impl<T> Mul<T> for NonMacroMatrix
-        where T: ArrayMatrix + Index<(usize, usize), Output=f32>
+    where
+        T: ArrayMatrix + Index<(usize, usize), Output = f32>,
     {
         type Output = NonMacroMatrix;
 
         fn mul(self, other: T) -> NonMacroMatrix {
             assert_eq!(self.row(), other.column());
             let mut result = NonMacroMatrix([0.; 9]);
-            let mut positions = (0..result.0.len()).map(|i| {
-                (i / self.column(), i % self.column())
-            });
+            let mut positions = (0..result.0.len()).map(|i| (i / self.column(), i % self.column()));
 
             loop {
                 if let Some((i, j)) = positions.next() {
@@ -264,7 +264,7 @@ mod tests {
                     }
                     result[(i, j)] = sum;
                 } else {
-                    break
+                    break;
                 }
             }
             result
@@ -287,9 +287,11 @@ mod tests {
         let m_b = NonMacroMatrix([1., 2., 3., 4., 5., 6., 7., 8., 9.]);
         let m_c = m_a * m_b;
 
-        assert_eq!(m_c, NonMacroMatrix([30., 36., 42., 66., 81., 96., 102., 126., 150.]));
+        assert_eq!(
+            m_c,
+            NonMacroMatrix([30., 36., 42., 66., 81., 96., 102., 126., 150.])
+        );
     }
-
 
     #[test]
     fn transpose_mut() {
